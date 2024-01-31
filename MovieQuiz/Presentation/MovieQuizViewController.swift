@@ -21,6 +21,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var questionFactory: QuestionFactoryProtocol? = QuestionFactory()
     private var currentQuestion: QuizQuestion?
     
+    
     override var preferredStatusBarStyle: UIStatusBarStyle{
         return .lightContent
     }
