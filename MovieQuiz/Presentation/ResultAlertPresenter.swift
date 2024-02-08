@@ -21,8 +21,6 @@ final class AlertPresentorImpl {
 
 extension AlertPresentorImpl: AlertPresenterProtocol {
     func show(alertModel: AlertModel) {
-        //        imageView.layer.masksToBounds = true
-        //        imageView.layer.borderWidth = 0
         
         let alert = UIAlertController(
             title: alertModel.title,
