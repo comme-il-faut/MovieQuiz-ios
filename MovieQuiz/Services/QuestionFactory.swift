@@ -61,6 +61,18 @@ extension QuestionFactoryImpl: QuestionFactory {
                 imageData = try Data(contentsOf: movie.resizedImageURL)
             } catch {
                 print("Failed to load image")
+                
+                // TODO: - show alert
+                let alertFailedLoad = AlertModel(title: "Ошибка",
+                                                 message: "Неудачная попытка загрузка изображения",
+                                                 buttonText: "Попробуйте еще раз") { [weak self] in
+                    guard let self = self else {return}
+                    loadData()
+                }
+                let alertPresenet = AlertPresentorImpl()
+                alertPresenet.show(alertModel: alertFailedLoad)
+                
+                return
             }
             
             let rating = Float(movie.rating) ?? 0
