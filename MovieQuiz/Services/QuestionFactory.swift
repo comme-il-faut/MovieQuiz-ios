@@ -21,11 +21,11 @@ protocol QuestionFactory {
 final class QuestionFactoryImpl {
     
     private let moviesLoader: MoviesLoading
-    private weak var delegate: QuestionFactoryDelegate?
+    private weak var viewController: QuestionFactoryDelegate?
     
     init(moviesLoader: MoviesLoading, delegate: QuestionFactoryDelegate?) {
         self.moviesLoader = moviesLoader
-        self.delegate = delegate
+        self.viewController = delegate
     }
     
     private var movies: [MostPopularMovie] = []
@@ -37,9 +37,9 @@ final class QuestionFactoryImpl {
                 switch result {
                 case .success(let mostPopularMovies):
                     self.movies = mostPopularMovies.items
-                    self.delegate?.didLoadDataFromServer()
+                    self.viewController?.didLoadDataFromServer()
                 case .failure(let error):
-                    self.delegate?.didFailToLoadData(with: error)
+                    self.viewController?.didFailToLoadData(with: error)
                 }
             }
         }
@@ -62,7 +62,6 @@ extension QuestionFactoryImpl: QuestionFactory {
             } catch {
                 print("Failed to load image")
                 
-                // TODO: - show alert
                 let alertFailedLoad = AlertModel(title: "Ошибка",
                                                  message: "Неудачная попытка загрузка изображения",
                                                  buttonText: "Попробуйте еще раз") { [weak self] in
@@ -71,7 +70,6 @@ extension QuestionFactoryImpl: QuestionFactory {
                 }
                 let alertPresenet = AlertPresentorImpl()
                 alertPresenet.show(alertModel: alertFailedLoad)
-                
                 return
             }
             
@@ -87,11 +85,13 @@ extension QuestionFactoryImpl: QuestionFactory {
             
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
-                self.delegate?.didReceiveNextQuestion(question)
+                self.viewController?.didReceiveNextQuestion(question)
             }
         }
     }
 }
+
+
 
 //private let questions: [QuizQuestion] = [
 //    QuizQuestion(

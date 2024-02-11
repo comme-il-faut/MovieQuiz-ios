@@ -56,10 +56,7 @@ final class MovieQuizViewController: UIViewController {
                                          message: message,
                                          buttonText: "Попробуйте еще раз") { [weak self] in
             guard let self = self else {return}
-            
             questionFactory?.loadData()
-            //            self.currentQuestionIndex = 0
-            //            self.correctAnswers = 0
         }
         
         alertPresenter?.show(alertModel: alertBadNetwork)
@@ -176,7 +173,6 @@ final class MovieQuizViewController: UIViewController {
 
 extension MovieQuizViewController: QuestionFactoryDelegate {
     func didLoadDataFromServer() {
-        activityIndicator.startAnimating()
         questionFactory?.requestNextQuestion()
         activityIndicator.stopAnimating()
     }
