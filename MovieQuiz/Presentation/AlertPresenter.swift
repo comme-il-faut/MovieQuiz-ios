@@ -12,17 +12,15 @@ protocol AlertPresenterProtocol {
 }
 
 final class AlertPresentorImpl {
-    weak var delegate: UIViewController?
+    weak var viewController: UIViewController?
     
     init(delegate: UIViewController? = nil) {
-        self.delegate = delegate
+        self.viewController = delegate
     }
 }
 
 extension AlertPresentorImpl: AlertPresenterProtocol {
     func show(alertModel: AlertModel) {
-        //        imageView.layer.masksToBounds = true
-        //        imageView.layer.borderWidth = 0
         
         let alert = UIAlertController(
             title: alertModel.title,
@@ -35,6 +33,6 @@ extension AlertPresentorImpl: AlertPresenterProtocol {
         
         alert.addAction(action)
         
-        delegate?.present(alert, animated: true)
+        viewController?.present(alert, animated: true)
     }
 }
