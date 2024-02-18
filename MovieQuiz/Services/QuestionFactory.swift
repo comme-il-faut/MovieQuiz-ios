@@ -18,7 +18,7 @@ protocol QuestionFactory {
     func loadData()
 }
 
-final class QuestionFactoryImpl {
+final class QuestionFactoryImpl: QuestionFactory {
     
     private let moviesLoader: MoviesLoading
     private weak var viewController: QuestionFactoryDelegate?
@@ -44,9 +44,6 @@ final class QuestionFactoryImpl {
             }
         }
     }
-}
-
-extension QuestionFactoryImpl: QuestionFactory {
     
     func requestNextQuestion() {
         DispatchQueue.global().async { [weak self] in
@@ -75,7 +72,7 @@ extension QuestionFactoryImpl: QuestionFactory {
             
             let rating = Float(movie.rating) ?? 0
             
-            let questionRating = Int.random(in: 1...10)
+            let questionRating = Int.random(in: 6...9)
             let text = "Рейтинг этого фильма больше чем \(questionRating)?"
             let correctAnswer = rating > Float(questionRating)
             
