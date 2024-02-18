@@ -26,9 +26,7 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
-//    private var currentQuestionIndex = 0
     private var correctAnswers = 0
-//    private let questionsAmount: Int = 10
     private var questionFactory: QuestionFactory?
     private var currentQuestion: QuizQuestion?
     private var alertPresenter: AlertPresenterProtocol?
@@ -41,7 +39,7 @@ final class MovieQuizViewController: UIViewController {
         alertPresenter = AlertPresentorImpl(delegate: self)
         questionFactory = QuestionFactoryImpl(moviesLoader: MoviesLoader(), delegate: self)
         statisticService = StatisticServiceImpl()
-        
+        presenter.viewController = self
         showLoadingIndicator()
         questionFactory?.loadData()
     }
@@ -104,13 +102,7 @@ final class MovieQuizViewController: UIViewController {
         return resultMessage
     }
     
-//    private func convert(model: QuizQuestion) -> QuizStepViewModel {
-//        return QuizStepViewModel(image: UIImage(data: model.image) ?? UIImage(),
-//                                 question: model.text,
-//                                 questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
-//    }
-    
-    private func showAnswerResult(isCorrect: Bool) {
+    func showAnswerResult(isCorrect: Bool) {
         if isCorrect {
             correctAnswers += 1
         }
@@ -154,22 +146,14 @@ final class MovieQuizViewController: UIViewController {
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         noButton.isEnabled = false
-        guard let currentQuestion = currentQuestion else {
-            return
-        }
-        let givenAnswer = false
-        
-        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+        presenter.currentQuestion = currentQuestion
+        presenter.noButtonClicked()
     }
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         yesButton.isEnabled = false
-        guard let currentQuestion = currentQuestion else {
-            return
-        }
-        let givenAnswer = true
-        
-        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+        presenter.currentQuestion = currentQuestion
+        presenter.yesButtonClicked()
     }
 }
 
