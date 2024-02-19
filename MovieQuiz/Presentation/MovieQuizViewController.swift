@@ -13,34 +13,37 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
-    private var questionFactory: QuestionFactoryImpl?
-    private var alertPresenter: AlertPresenterProtocol?
+    var alertPresenter: AlertPresenterProtocol?
     private var statisticService: StatisticService?
-    private let presenter = MovieQuizPresenter()
+    private var presenter: MovieQuizPresenter!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        presenter = MovieQuizPresenter(viewController: self)
+        
         imageView.layer.cornerRadius = 20
         alertPresenter = AlertPresentorImpl(delegate: self)
-        questionFactory = QuestionFactoryImpl(moviesLoader: MoviesLoader(), delegate: self)
         statisticService = StatisticServiceImpl()
-        presenter.viewController = self
         showLoadingIndicator()
-        questionFactory?.loadData()
+        presenter.loadData()
     }
     
     private func showLoadingIndicator() {
         activityIndicator.startAnimating()
     }
     
-    private func showNetworkError(message: String) {
+    func hideActivityIndicator() {
         activityIndicator.stopAnimating()
+    }
+    
+    func showNetworkError(message: String) {
+        hideActivityIndicator()
         
         let alertBadNetwork = AlertModel(title: "Ошибка",
                                          message: message,
                                          buttonText: "Попробуйте еще раз") { [weak self] in
             guard let self = self else {return}
-            questionFactory?.loadData()
+            presenter.restartGame()
         }
         
         alertPresenter?.show(alertModel: alertBadNetwork)
@@ -54,16 +57,13 @@ final class MovieQuizViewController: UIViewController {
                                     message: makeResultMessage(),
                                     buttonText: "Сыграть еще раз",
                                     completion: { [weak self] in
-            guard let self = self else {
-                return
-            }
+            guard let self = self else { return }
             
             self.presenter.restartGame()
-            questionFactory?.requestNextQuestion()
             imageView.layer.masksToBounds = true
             imageView.layer.borderWidth = 0
-        }
-        )
+        })
+        
         alertPresenter?.show(alertModel: alertModel)
     }
     
@@ -94,7 +94,6 @@ final class MovieQuizViewController: UIViewController {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else { return }
-            self.presenter.questionFactory = self.questionFactory
             self.presenter.showNextQuestionOrResults()
             yesButton.isEnabled = true
             noButton.isEnabled = true
@@ -118,20 +117,5 @@ final class MovieQuizViewController: UIViewController {
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
         yesButton.isEnabled = false
         presenter.yesButtonClicked()
-    }
-}
-
-extension MovieQuizViewController: QuestionFactoryDelegate {
-    func didReceiveNextQuestion(_ question: QuizQuestion) {
-        presenter.didReceiveNextQuestion(question: question)
-    }
-    
-    func didLoadDataFromServer() {
-        questionFactory?.requestNextQuestion()
-        activityIndicator.stopAnimating()
-    }
-    
-    func didFailToLoadData(with error: Error) {
-        showNetworkError(message: error.localizedDescription)
     }
 }

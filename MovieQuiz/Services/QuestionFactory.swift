@@ -8,7 +8,7 @@
 import Foundation
 
 protocol QuestionFactoryDelegate: AnyObject {
-    func didReceiveNextQuestion(_ question: QuizQuestion)
+    func didReceiveNextQuestion(_ question: QuizQuestion?)
     func didLoadDataFromServer()
     func didFailToLoadData(with error: Error)
 }
@@ -20,12 +20,13 @@ protocol QuestionFactory {
 
 final class QuestionFactoryImpl: QuestionFactory {
     
-    private let moviesLoader: MoviesLoading
-    private weak var viewController: QuestionFactoryDelegate?
     
-    init(moviesLoader: MoviesLoading, delegate: QuestionFactoryDelegate?) {
+    private let moviesLoader: MoviesLoading
+    weak var presenter: MovieQuizPresenter?
+    
+    init(moviesLoader: MoviesLoading, presenter: MovieQuizPresenter) {
         self.moviesLoader = moviesLoader
-        self.viewController = delegate
+        self.presenter = presenter
     }
     
     private var movies: [MostPopularMovie] = []
@@ -37,9 +38,9 @@ final class QuestionFactoryImpl: QuestionFactory {
                 switch result {
                 case .success(let mostPopularMovies):
                     self.movies = mostPopularMovies.items
-                    self.viewController?.didLoadDataFromServer()
+                    self.presenter?.didLoadDataFromServer()
                 case .failure(let error):
-                    self.viewController?.didFailToLoadData(with: error)
+                    self.presenter?.didFailToLoadData(with: error)
                 }
             }
         }
@@ -82,7 +83,7 @@ final class QuestionFactoryImpl: QuestionFactory {
             
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
-                self.viewController?.didReceiveNextQuestion(question)
+                self.presenter?.didReceiveNextQuestion(question)
             }
         }
     }

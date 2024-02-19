@@ -7,16 +7,36 @@
 
 import UIKit
 
-final class MovieQuizPresenter {
+final class MovieQuizPresenter: QuestionFactoryDelegate {
     
     
     let questionsAmount: Int = 10
     var correctAnswers: Int = 0
     private var currentQuestionIndex: Int = 0
     var currentQuestion: QuizQuestion?
-    weak var viewController: MovieQuizViewController?
-    weak var questionFactory: QuestionFactoryImpl?
+    private weak var viewController: MovieQuizViewController?
+    private var questionFactory: QuestionFactory?
     
+    init(viewController: MovieQuizViewController) {
+        self.viewController = viewController
+        self.questionFactory = QuestionFactoryImpl(moviesLoader: MoviesLoader(), presenter: self)
+        questionFactory?.loadData()
+        viewController.hideActivityIndicator()
+    }
+    
+    func didFailToLoadData(with error: Error) {
+        let message = error.localizedDescription
+        viewController?.showNetworkError(message: message)
+    }
+    
+    func didLoadDataFromServer() {
+        viewController?.hideActivityIndicator()
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func loadData() {
+        questionFactory?.loadData()
+    }
     
     func isLastQuestion() -> Bool {
         currentQuestionIndex == questionsAmount - 1
@@ -25,6 +45,7 @@ final class MovieQuizPresenter {
     func restartGame() {
         currentQuestionIndex = 0
         correctAnswers = 0
+        questionFactory?.requestNextQuestion()
     }
     
     func switchToNextQuestion() {
@@ -59,7 +80,9 @@ final class MovieQuizPresenter {
         viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
     }
     
-    func didReceiveNextQuestion(question: QuizQuestion) {
+    func didReceiveNextQuestion(_ question: QuizQuestion?) {
+        guard let question = question else { return }
+        
         currentQuestion = question
         let viewModel = convert(model: question)
         
