@@ -13,7 +13,6 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
-    private var correctAnswers = 0
     private var questionFactory: QuestionFactoryImpl?
     private var alertPresenter: AlertPresenterProtocol?
     private var statisticService: StatisticService?
@@ -49,9 +48,7 @@ final class MovieQuizViewController: UIViewController {
     }
     
     func show(quiz result: QuizResultsViewModel) {
-        statisticService?.store(correct: correctAnswers, total: presenter.questionsAmount)
-        
-        
+        statisticService?.store(correct: presenter.correctAnswers, total: presenter.questionsAmount)
         
         let alertModel = AlertModel(title: "Этот раунд окончен!",
                                     message: makeResultMessage(),
@@ -61,8 +58,7 @@ final class MovieQuizViewController: UIViewController {
                 return
             }
             
-            self.presenter.resetQuestionIndex()
-            self.correctAnswers = 0
+            self.presenter.restartGame()
             questionFactory?.requestNextQuestion()
             imageView.layer.masksToBounds = true
             imageView.layer.borderWidth = 0
@@ -70,6 +66,7 @@ final class MovieQuizViewController: UIViewController {
         )
         alertPresenter?.show(alertModel: alertModel)
     }
+    
     private func makeResultMessage() -> String {
         
         guard let statisticService = statisticService, let bestGame = statisticService.bestGame else {
@@ -77,7 +74,7 @@ final class MovieQuizViewController: UIViewController {
             return ""
         }
         
-        let currentGameresultLine = "Ваш результат: \(correctAnswers)/\(presenter.questionsAmount)"
+        let currentGameresultLine = "Ваш результат: \(presenter.correctAnswers)/\(presenter.questionsAmount)"
         let totalPlaysCountLine = "Количество сыгранных квизов: \(statisticService.gamesCount)"
         let bestGameInfoLines = "Рекорд: \(bestGame.correct)/\(bestGame.total) (\(bestGame.date.dateTimeString))"
         let averageAccurancyGame = "Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%"
@@ -89,9 +86,7 @@ final class MovieQuizViewController: UIViewController {
     }
     
     func showAnswerResult(isCorrect: Bool) {
-        if isCorrect {
-            correctAnswers += 1
-        }
+        presenter.didAnswer(isCorrect: isCorrect)
         
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
@@ -99,7 +94,6 @@ final class MovieQuizViewController: UIViewController {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else { return }
-            self.presenter.correctAnswers = self.correctAnswers
             self.presenter.questionFactory = self.questionFactory
             self.presenter.showNextQuestionOrResults()
             yesButton.isEnabled = true
