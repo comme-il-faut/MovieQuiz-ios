@@ -6,16 +6,16 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     private var correctAnswers: Int = 0
     private var currentQuestionIndex: Int = 0
     private var currentQuestion: QuizQuestion?
-    private weak var viewController: MovieQuizViewController?
+    private weak var viewController: MovieQuizViewControllerProtocol?
     private var questionFactory: QuestionFactory?
     var statisticService: StatisticService!
     
-    init(viewController: MovieQuizViewController) {
+    init(viewController: MovieQuizViewControllerProtocol) {
         self.viewController = viewController
         self.questionFactory = QuestionFactoryImpl(moviesLoader: MoviesLoader(), presenter: self)
         questionFactory?.loadData()
         self.statisticService = StatisticServiceImpl()
-        viewController.hideActivityIndicator()
+        viewController.hideLoadingIndicator()
     }
     
     func getQuestionAmount() -> Int {
@@ -32,7 +32,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     }
     
     func didLoadDataFromServer() {
-        viewController?.hideActivityIndicator()
+        viewController?.hideLoadingIndicator()
         questionFactory?.requestNextQuestion()
     }
     
@@ -74,9 +74,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     
     private func didAnswer(isYes: Bool) {
         
-        guard let currentQuestion = currentQuestion else {
-            return
-        }
+        guard let currentQuestion = currentQuestion else { return }
         let givenAnswer = isYes
         
         proceedWithAnswer(isCorrect: givenAnswer == currentQuestion.correctAnswer)
@@ -133,6 +131,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else { return }
             self.proceedToNextQuestionOrResults()
+            viewController?.isEnabledButtons(activate: true)
         }
     }
 }

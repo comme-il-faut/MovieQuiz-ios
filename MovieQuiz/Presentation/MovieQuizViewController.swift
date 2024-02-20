@@ -1,6 +1,16 @@
 import UIKit
 
-final class MovieQuizViewController: UIViewController {
+protocol MovieQuizViewControllerProtocol: AnyObject {
+    func show(quiz step: QuizStepViewModel)
+    func show(quiz result: QuizResultsViewModel)
+    func highlightImageBorder(isCorrectAnswer: Bool)
+    func showLoadingIndicator()
+    func hideLoadingIndicator()
+    func isEnabledButtons(activate: Bool)
+    func showNetworkError(message: String)
+}
+
+final class MovieQuizViewController: UIViewController, MovieQuizViewControllerProtocol {
     
     override var preferredStatusBarStyle: UIStatusBarStyle{
         return .lightContent
@@ -27,11 +37,11 @@ final class MovieQuizViewController: UIViewController {
         presenter.loadData()
     }
     
-    private func showLoadingIndicator() {
+    func showLoadingIndicator() {
         activityIndicator.startAnimating()
     }
     
-    func hideActivityIndicator() {
+    func hideLoadingIndicator() {
         activityIndicator.stopAnimating()
     }
     
@@ -65,13 +75,15 @@ final class MovieQuizViewController: UIViewController {
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 8
         imageView.layer.borderColor = isCorrectAnswer ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
-        
-        yesButton.isEnabled = true
-        noButton.isEnabled = true
+    }
+    
+    func isEnabledButtons(activate: Bool){
+        yesButton.isEnabled = activate
+        noButton.isEnabled = activate
     }
     
     func showNetworkError(message: String) {
-        hideActivityIndicator()
+        hideLoadingIndicator()
         
         let alertBadNetwork = AlertModel(title: "Ошибка",
                                          message: message,
@@ -83,14 +95,13 @@ final class MovieQuizViewController: UIViewController {
         alertPresenter?.show(alertModel: alertBadNetwork)
     }
     
-    
     @IBAction private func noButtonClicked(_ sender: UIButton) {
-        noButton.isEnabled = false
+        isEnabledButtons(activate: false)
         presenter.noButtonClicked()
     }
     
     @IBAction private func yesButtonClicked(_ sender: UIButton) {
-        yesButton.isEnabled = false
+        isEnabledButtons(activate: false)
         presenter.yesButtonClicked()
     }
 }
