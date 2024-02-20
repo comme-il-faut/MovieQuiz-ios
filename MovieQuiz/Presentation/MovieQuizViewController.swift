@@ -13,9 +13,9 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
-    var alertPresenter: AlertPresenterProtocol?
-    private var presenter: MovieQuizPresenter!
     
+    private var presenter: MovieQuizPresenter!
+    var alertPresenter: AlertPresenterProtocol?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,22 +35,8 @@ final class MovieQuizViewController: UIViewController {
         activityIndicator.stopAnimating()
     }
     
-    func showNetworkError(message: String) {
-        hideActivityIndicator()
-        
-        let alertBadNetwork = AlertModel(title: "Ошибка",
-                                         message: message,
-                                         buttonText: "Попробуйте еще раз") { [weak self] in
-            guard let self = self else {return}
-            presenter.restartGame()
-        }
-        
-        alertPresenter?.show(alertModel: alertBadNetwork)
-        
-    }
-    
     func show(quiz result: QuizResultsViewModel) {
-        presenter?.statisticService?.store(correct: presenter.correctAnswers, total: presenter.questionsAmount)
+        presenter?.statisticService?.store(correct: presenter.getCorrectAnswers(), total: presenter.getQuestionAmount())
         
         let alertModel = AlertModel(title: "Этот раунд окончен!",
                                     message: presenter.makeResultMessage(),
@@ -66,21 +52,6 @@ final class MovieQuizViewController: UIViewController {
         alertPresenter?.show(alertModel: alertModel)
     }
     
-    func showAnswerResult(isCorrect: Bool) {
-        presenter.didAnswer(isCorrect: isCorrect)
-        
-        imageView.layer.masksToBounds = true
-        imageView.layer.borderWidth = 8
-        imageView.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self = self else { return }
-            self.presenter.showNextQuestionOrResults()
-            yesButton.isEnabled = true
-            noButton.isEnabled = true
-        }
-    }
-    
     func show(quiz step: QuizStepViewModel) {
         imageView.layer.masksToBounds = true
         imageView.layer.borderWidth = 0
@@ -89,6 +60,29 @@ final class MovieQuizViewController: UIViewController {
         textLabel.text = step.question
         counterLabel.text = step.questionNumber
     }
+    
+    func highlightImageBorder(isCorrectAnswer: Bool) {
+        imageView.layer.masksToBounds = true
+        imageView.layer.borderWidth = 8
+        imageView.layer.borderColor = isCorrectAnswer ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
+        
+        yesButton.isEnabled = true
+        noButton.isEnabled = true
+    }
+    
+    func showNetworkError(message: String) {
+        hideActivityIndicator()
+        
+        let alertBadNetwork = AlertModel(title: "Ошибка",
+                                         message: message,
+                                         buttonText: "Попробуйте еще раз") { [weak self] in
+            guard let self = self else {return}
+            presenter.restartGame()
+        }
+        
+        alertPresenter?.show(alertModel: alertBadNetwork)
+    }
+    
     
     @IBAction private func noButtonClicked(_ sender: UIButton) {
         noButton.isEnabled = false

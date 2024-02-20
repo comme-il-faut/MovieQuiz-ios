@@ -1,19 +1,11 @@
-//
-//  MovieQuizPresenter.swift
-//  MovieQuiz
-//
-//  Created by Антон Ровенко on 18.02.2024.
-//
-
 import UIKit
 
 final class MovieQuizPresenter: QuestionFactoryDelegate {
     
-    
-    let questionsAmount: Int = 10
-    var correctAnswers: Int = 0
+    private let questionsAmount: Int = 10
+    private var correctAnswers: Int = 0
     private var currentQuestionIndex: Int = 0
-    var currentQuestion: QuizQuestion?
+    private var currentQuestion: QuizQuestion?
     private weak var viewController: MovieQuizViewController?
     private var questionFactory: QuestionFactory?
     var statisticService: StatisticService!
@@ -24,6 +16,14 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         questionFactory?.loadData()
         self.statisticService = StatisticServiceImpl()
         viewController.hideActivityIndicator()
+    }
+    
+    func getQuestionAmount() -> Int {
+        return questionsAmount
+    }
+    
+    func getCorrectAnswers() -> Int {
+        return correctAnswers
     }
     
     func didFailToLoadData(with error: Error) {
@@ -79,7 +79,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         }
         let givenAnswer = isYes
         
-        viewController?.showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+        proceedWithAnswer(isCorrect: givenAnswer == currentQuestion.correctAnswer)
     }
     
     func didReceiveNextQuestion(_ question: QuizQuestion?) {
@@ -93,7 +93,7 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         }
     }
     
-    func showNextQuestionOrResults() {
+    private func proceedToNextQuestionOrResults() {
         if self.isLastQuestion() {
             let text = "Вы ответили на \(correctAnswers) из 10, попробуйте ещё раз!"
             
@@ -124,5 +124,15 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
             currentGameresultLine, totalPlaysCountLine, bestGameInfoLines, averageAccurancyGame
         ].joined(separator: "\n")
         return resultMessage
+    }
+    
+    private func proceedWithAnswer(isCorrect: Bool) {
+        didAnswer(isCorrect: isCorrect)
+        viewController?.highlightImageBorder(isCorrectAnswer: isCorrect)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self else { return }
+            self.proceedToNextQuestionOrResults()
+        }
     }
 }
