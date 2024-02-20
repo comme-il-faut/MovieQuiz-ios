@@ -14,8 +14,8 @@ final class MovieQuizViewController: UIViewController {
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     
     var alertPresenter: AlertPresenterProtocol?
-    private var statisticService: StatisticService?
     private var presenter: MovieQuizPresenter!
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -23,7 +23,6 @@ final class MovieQuizViewController: UIViewController {
         
         imageView.layer.cornerRadius = 20
         alertPresenter = AlertPresentorImpl(delegate: self)
-        statisticService = StatisticServiceImpl()
         showLoadingIndicator()
         presenter.loadData()
     }
@@ -51,10 +50,10 @@ final class MovieQuizViewController: UIViewController {
     }
     
     func show(quiz result: QuizResultsViewModel) {
-        statisticService?.store(correct: presenter.correctAnswers, total: presenter.questionsAmount)
+        presenter?.statisticService?.store(correct: presenter.correctAnswers, total: presenter.questionsAmount)
         
         let alertModel = AlertModel(title: "Этот раунд окончен!",
-                                    message: makeResultMessage(),
+                                    message: presenter.makeResultMessage(),
                                     buttonText: "Сыграть еще раз",
                                     completion: { [weak self] in
             guard let self = self else { return }
@@ -65,24 +64,6 @@ final class MovieQuizViewController: UIViewController {
         })
         
         alertPresenter?.show(alertModel: alertModel)
-    }
-    
-    private func makeResultMessage() -> String {
-        
-        guard let statisticService = statisticService, let bestGame = statisticService.bestGame else {
-            assertionFailure("error message")
-            return ""
-        }
-        
-        let currentGameresultLine = "Ваш результат: \(presenter.correctAnswers)/\(presenter.questionsAmount)"
-        let totalPlaysCountLine = "Количество сыгранных квизов: \(statisticService.gamesCount)"
-        let bestGameInfoLines = "Рекорд: \(bestGame.correct)/\(bestGame.total) (\(bestGame.date.dateTimeString))"
-        let averageAccurancyGame = "Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%"
-        
-        let resultMessage = [
-            currentGameresultLine, totalPlaysCountLine, bestGameInfoLines, averageAccurancyGame
-        ].joined(separator: "\n")
-        return resultMessage
     }
     
     func showAnswerResult(isCorrect: Bool) {

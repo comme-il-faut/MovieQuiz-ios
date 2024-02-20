@@ -16,11 +16,13 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     var currentQuestion: QuizQuestion?
     private weak var viewController: MovieQuizViewController?
     private var questionFactory: QuestionFactory?
+    var statisticService: StatisticService!
     
     init(viewController: MovieQuizViewController) {
         self.viewController = viewController
         self.questionFactory = QuestionFactoryImpl(moviesLoader: MoviesLoader(), presenter: self)
         questionFactory?.loadData()
+        self.statisticService = StatisticServiceImpl()
         viewController.hideActivityIndicator()
     }
     
@@ -104,5 +106,23 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
             self.switchToNextQuestion()
             questionFactory?.requestNextQuestion()
         }
+    }
+    
+    func makeResultMessage() -> String {
+        
+        guard let statisticService = statisticService, let bestGame = statisticService.bestGame else {
+            assertionFailure("error message")
+            return ""
+        }
+        
+        let currentGameresultLine = "Ваш результат: \(correctAnswers)/\(questionsAmount)"
+        let totalPlaysCountLine = "Количество сыгранных квизов: \(statisticService.gamesCount)"
+        let bestGameInfoLines = "Рекорд: \(bestGame.correct)/\(bestGame.total) (\(bestGame.date.dateTimeString))"
+        let averageAccurancyGame = "Средняя точность: \(String(format: "%.2f", statisticService.totalAccuracy))%"
+        
+        let resultMessage = [
+            currentGameresultLine, totalPlaysCountLine, bestGameInfoLines, averageAccurancyGame
+        ].joined(separator: "\n")
+        return resultMessage
     }
 }
