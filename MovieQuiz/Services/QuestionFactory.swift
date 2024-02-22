@@ -8,7 +8,7 @@
 import Foundation
 
 protocol QuestionFactoryDelegate: AnyObject {
-    func didReceiveNextQuestion(_ question: QuizQuestion)
+    func didReceiveNextQuestion(_ question: QuizQuestion?)
     func didLoadDataFromServer()
     func didFailToLoadData(with error: Error)
 }
@@ -18,14 +18,15 @@ protocol QuestionFactory {
     func loadData()
 }
 
-final class QuestionFactoryImpl {
+final class QuestionFactoryImpl: QuestionFactory {
+    
     
     private let moviesLoader: MoviesLoading
-    private weak var viewController: QuestionFactoryDelegate?
+    weak var presenter: MovieQuizPresenter?
     
-    init(moviesLoader: MoviesLoading, delegate: QuestionFactoryDelegate?) {
+    init(moviesLoader: MoviesLoading, presenter: MovieQuizPresenter) {
         self.moviesLoader = moviesLoader
-        self.viewController = delegate
+        self.presenter = presenter
     }
     
     private var movies: [MostPopularMovie] = []
@@ -37,16 +38,13 @@ final class QuestionFactoryImpl {
                 switch result {
                 case .success(let mostPopularMovies):
                     self.movies = mostPopularMovies.items
-                    self.viewController?.didLoadDataFromServer()
+                    self.presenter?.didLoadDataFromServer()
                 case .failure(let error):
-                    self.viewController?.didFailToLoadData(with: error)
+                    self.presenter?.didFailToLoadData(with: error)
                 }
             }
         }
     }
-}
-
-extension QuestionFactoryImpl: QuestionFactory {
     
     func requestNextQuestion() {
         DispatchQueue.global().async { [weak self] in
@@ -75,7 +73,7 @@ extension QuestionFactoryImpl: QuestionFactory {
             
             let rating = Float(movie.rating) ?? 0
             
-            let questionRating = Int.random(in: 1...10)
+            let questionRating = Int.random(in: 6...9)
             let text = "Рейтинг этого фильма больше чем \(questionRating)?"
             let correctAnswer = rating > Float(questionRating)
             
@@ -85,7 +83,7 @@ extension QuestionFactoryImpl: QuestionFactory {
             
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
-                self.viewController?.didReceiveNextQuestion(question)
+                self.presenter?.didReceiveNextQuestion(question)
             }
         }
     }
